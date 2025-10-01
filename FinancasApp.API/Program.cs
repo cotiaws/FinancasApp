@@ -1,3 +1,4 @@
+using FinancasApp.Infra.Data.Extensions;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,9 @@ builder.Services.AddOpenApi();
 //Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+//Métodos de extensão
+builder.Services.AddEntityFramework(builder.Configuration);
 
 var app = builder.Build();
 
