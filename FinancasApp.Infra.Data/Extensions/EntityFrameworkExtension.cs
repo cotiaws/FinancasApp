@@ -1,4 +1,6 @@
-﻿using FinancasApp.Infra.Data.Contexts;
+﻿using FinancasApp.Domain.Interfaces.Repositories;
+using FinancasApp.Infra.Data.Contexts;
+using FinancasApp.Infra.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +25,9 @@ namespace FinancasApp.Infra.Data.Extensions
 
             //injetar as configurações da classe DataContext
             services.AddDbContext<DataContext>(options => options.UseSqlServer(connectionString));
+
+            //Injeção de dependência do UnitOfWork
+            services.AddTransient<IUnitOfWork, UnitOfWork>();
 
             return services;
         }
