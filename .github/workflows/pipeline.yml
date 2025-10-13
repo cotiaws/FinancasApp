@@ -20,13 +20,18 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: Mostrar estrutura do repositório
+        run: |
+          echo "Listando estrutura de diretórios..."
+          ls -R
+
       - name: Restaurar dependências
         run: dotnet restore
 
-      - name: Compilar a aplicação
-        run: dotnet build --configuration Release --no-restore
+      - name: Compilar e publicar a aplicação
+        run: dotnet publish ./src/UsuariosApp.API/UsuariosApp.API.csproj --configuration Release --output ./output
 
-      - name: Listar arquivos publicados
+      - name: Verificar saída do publish
         run: ls -R ./output
 
       - name: Exportar artefatos de build
