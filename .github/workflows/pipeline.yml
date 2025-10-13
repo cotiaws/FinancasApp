@@ -26,11 +26,15 @@ jobs:
       - name: Compilar a aplicação
         run: dotnet build --configuration Release --no-restore
 
+      - name: Listar arquivos publicados
+        run: ls -R ./output
+
       - name: Exportar artefatos de build
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: ./output
+          retention-days: 7
        
    test:
       name: Testes
