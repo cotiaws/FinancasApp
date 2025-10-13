@@ -29,7 +29,7 @@ jobs:
         run: dotnet restore
 
       - name: Compilar e publicar a aplicação
-        run: dotnet publish ./src/UsuariosApp.API/UsuariosApp.API.csproj --configuration Release --output ./output
+        run: dotnet publish ./src/FinancasApp.API/FinancasApp.API.csproj --configuration Release --output ./output
 
       - name: Verificar saída do publish
         run: ls -R ./output
