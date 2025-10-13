@@ -57,9 +57,30 @@ jobs:
       - name: Restaurar dependências
         run: dotnet restore
 
-      - name: Executar testes unitários
-        run: dotnet test ./FinancasApp.Infra.Data.Tests/FinancasApp.Infra.Data.Tests.csproj --no-restore --verbosity normal --configuration Release
-   
+      - name: Executar testes (xUnit)
+        run: |
+          mkdir -p TestResults
+          dotnet test ./FinancasApp.Infra.Data.Tests/FinancasApp.Infra.Data.Tests.csproj \
+            --no-restore \
+            --verbosity normal \
+            --configuration Release \
+            --logger "trx;LogFileName=TestResults/results.trx" \
+            --results-directory ./TestResults
+
+      - name: Converter relatório TRX em HTML
+        run: |
+          dotnet tool install -g trx2html
+          trx2html -i ./TestResults/results.trx -o ./TestResults/index.html
+        env:
+          PATH: $PATH:~/.dotnet/tools
+
+      - name: Exportar relatório de testes
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: ./TestResults
+          retention-days: 7
+
    deploy:
       name: Implantação
       runs-on: ubuntu-latest
