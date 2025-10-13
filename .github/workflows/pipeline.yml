@@ -62,17 +62,10 @@ jobs:
           mkdir -p TestResults
           dotnet test ./FinancasApp.Infra.Data.Tests/FinancasApp.Infra.Data.Tests.csproj \
             --no-restore \
-            --verbosity normal \
             --configuration Release \
-            --logger "trx;LogFileName=TestResults/results.trx" \
+            --logger "trx;LogFileName=results.trx" \
+            --logger "html;LogFileName=results.html" \
             --results-directory ./TestResults
-
-      - name: Converter relatório TRX em HTML
-        run: |
-          dotnet tool install -g trx2html
-          trx2html -i ./TestResults/results.trx -o ./TestResults/index.html
-        env:
-          PATH: $PATH:~/.dotnet/tools
 
       - name: Exportar relatório de testes
         uses: actions/upload-artifact@v4
