@@ -49,18 +49,25 @@ jobs:
     - name: Restaurar dependências
       run: dotnet restore
 
-    - name: Adicionar logger HTML ao projeto de testes
-      run: dotnet add ./FinancasApp.Infra.Data.Tests/FinancasApp.Infra.Data.Tests.csproj package Microsoft.DotNet.Test.HtmlLogger --version 1.0.0
+    - name: Criar pasta de resultados
+      run: mkdir -p TestResults
 
-    - name: Executar testes xUnit com HTML
+    - name: Executar testes xUnit (TRX)
       run: |
-        mkdir -p TestResults
         dotnet test ./FinancasApp.Infra.Data.Tests/FinancasApp.Infra.Data.Tests.csproj \
           --no-restore \
           --configuration Release \
-          --logger "html;LogFileName=results.html" \
           --logger "trx;LogFileName=results.trx" \
           --results-directory ./TestResults
+
+    - name: Instalar Mono (necessário para ReportUnit)
+      run: sudo apt-get update && sudo apt-get install -y mono-complete
+
+    - name: Baixar ReportUnit CLI
+      run: wget https://github.com/reportunit/reportunit/releases/download/v1.5.0/ReportUnit.exe -O ./ReportUnit.exe
+
+    - name: Gerar relatório HTML detalhado
+      run: mono ./ReportUnit.exe ./TestResults/results.trx ./TestResults/html
 
     - name: Verificar arquivos de teste gerados
       run: ls -R ./TestResults
@@ -69,7 +76,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: test-report
-        path: ./TestResults
+        path: ./TestResults/html
         retention-days: 7
 
   deploy:
