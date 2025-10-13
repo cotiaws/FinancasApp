@@ -12,10 +12,19 @@ jobs:
       name: Compilação
       runs-on: ubuntu-latest
       steps:
-          - name: Checkout do código
-            uses: actions/checkout@v3
-          - name: Compilar
-            run: echo "Compilando a aplicação..."
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Instalar .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restaurar dependências
+        run: dotnet restore
+
+      - name: Compilar a aplicação
+        run: dotnet build --configuration Release --no-restore
        
    test:
       name: Testes
