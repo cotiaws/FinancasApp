@@ -46,33 +46,39 @@ jobs:
       runs-on: ubuntu-latest
       needs: build
       steps:
-      - name: Checkout do código
-        uses: actions/checkout@v3
+        - name: Checkout do código
+          uses: actions/checkout@v3
 
-      - name: Instalar .NET 9 SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
+        - name: Instalar .NET 9 SDK
+          uses: actions/setup-dotnet@v4
+          with:
+            dotnet-version: '9.0.x'
 
-      - name: Restaurar dependências
-        run: dotnet restore
+        - name: Restaurar dependências
+          run: dotnet restore
 
-      - name: Executar testes (xUnit)
-        run: |
-          mkdir -p TestResults
-          dotnet test ./FinancasApp.Infra.Data.Tests/FinancasApp.Infra.Data.Tests.csproj \
-            --no-restore \
-            --configuration Release \
-            --logger "trx;LogFileName=results.trx" \
-            --logger "html;LogFileName=results.html" \
-            --results-directory ./TestResults
+        - name: Instalar trx2html
+          run: dotnet tool install --global trx2html
 
-      - name: Exportar relatório de testes
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-report
-          path: ./TestResults
-          retention-days: 7
+        - name: Executar testes (xUnit)
+          run: |
+            mkdir -p TestResults
+            dotnet test ./FinancasApp.Infra.Data.Tests/FinancasApp.Infra.Data.Tests.csproj \
+              --no-restore \
+              --configuration Release \
+              --logger "trx;LogFileName=results.trx" \
+              --results-directory ./TestResults
+
+        - name: Gerar relatório HTML detalhado
+          run: |
+            ~/.dotnet/tools/trx2html ./TestResults/results.trx -o ./TestResults/results.html
+
+        - name: Exportar relatório de testes
+          uses: actions/upload-artifact@v4
+          with:
+            name: test-report
+            path: ./TestResults
+            retention-days: 7
 
    deploy:
       name: Implantação
