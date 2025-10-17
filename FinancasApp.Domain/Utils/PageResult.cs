@@ -9,12 +9,12 @@ namespace FinancasApp.Domain.Utils
     /// <summary>
     /// Representa o resultado paginado de uma consulta.
     /// </summary>
-    public class PageResult<TEntity> where TEntity : class
+    public class PageResult<T>
     {
         /// <summary>
         /// Coleção de itens (entidade) retornados na página atual da consulta
         /// </summary>
-        public IEnumerable<TEntity> Items { get; set; } = new List<TEntity>();
+        public IEnumerable<T> Items { get; set; } = new List<T>();
 
         /// <summary>
         /// Número da página atual da consulta
