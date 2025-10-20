@@ -14,9 +14,9 @@ namespace FinancasApp.Domain.Interfaces.Services
     {
         Task<TResponse> AdicionarAsync(TRequest request);
         
-        Task<TResponse> Modificar(TKey id, TRequest request);
+        Task<TResponse> ModificarAsync(TKey id, TRequest request);
         
-        Task<TResponse> Excluir(TKey id);
+        Task<TResponse> ExcluirAsync(TKey id);
 
         Task<PageResult<TResponse>> ConsultarAsync(int pageNumber, int pageSize);
 

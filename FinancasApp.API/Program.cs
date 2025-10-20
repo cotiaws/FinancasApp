@@ -1,4 +1,5 @@
 using FinancasApp.Infra.Data.Extensions;
+using FinancasApp.Domain.Extensions;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,7 @@ builder.Services.AddSwaggerGen();
 
 //Métodos de extensão
 builder.Services.AddEntityFramework(builder.Configuration);
+builder.Services.AddDomainService();
 
 var app = builder.Build();
 

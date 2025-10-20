@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
 using FinancasApp.Domain.Dtos.Requests;
 using FinancasApp.Domain.Dtos.Responses;
+using FinancasApp.Domain.Entities;
 using FinancasApp.Domain.Interfaces.Repositories;
 using FinancasApp.Domain.Interfaces.Services;
 using FinancasApp.Domain.Utils;
+using FinancasApp.Domain.Validators;
+using FluentValidation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,34 +20,89 @@ namespace FinancasApp.Domain.Services
     /// </summary>
     public class MovimentacaoService (IUnitOfWork unitOfWork, IMapper mapper) : IMovimentacaoService
     {
-        public Task<MovimentacaoResponse> AdicionarAsync(MovimentacaoRequest request)
+        public async Task<MovimentacaoResponse> AdicionarAsync(MovimentacaoRequest request)
         {
-            throw new NotImplementedException();
+            var anyCategoria = await unitOfWork.CategoriaRepository.AnyAsync(c => c.Id.Equals(request.CategoriaId));
+            if (!anyCategoria)
+                throw new KeyNotFoundException("Categoria não encontrada.");
+
+            var movimentacao = mapper.Map<Movimentacao>(request);
+
+            var validator = new MovimentacaoValidator();
+            var result = validator.Validate(movimentacao);
+
+            if (!result.IsValid)
+                throw new ValidationException(result.Errors);
+
+            await unitOfWork.MovimentacaoRepository.AddAsync(movimentacao);
+
+            return mapper.Map<MovimentacaoResponse>(movimentacao);
         }
 
-        public Task<MovimentacaoResponse> Modificar(Guid id, MovimentacaoRequest request)
+        public async Task<MovimentacaoResponse> ModificarAsync(Guid id, MovimentacaoRequest request)
         {
-            throw new NotImplementedException();
+            var anyCategoria = await unitOfWork.CategoriaRepository.AnyAsync(c => c.Id.Equals(request.CategoriaId));
+            if (!anyCategoria)
+                throw new KeyNotFoundException("Categoria não encontrada.");
+
+            var movimentacao = await unitOfWork.MovimentacaoRepository.GetByIdAsync(id);
+            if(movimentacao == null)
+                throw new KeyNotFoundException("Movimentação não encontrada.");
+
+            mapper.Map(request, movimentacao);
+
+            var validator = new MovimentacaoValidator();
+            var result = validator.Validate(movimentacao);
+
+            if (!result.IsValid)
+                throw new ValidationException(result.Errors);
+
+            await unitOfWork.MovimentacaoRepository.UpdateAsync(movimentacao);
+
+            return mapper.Map<MovimentacaoResponse>(movimentacao);
         }
 
-        public Task<MovimentacaoResponse> Excluir(Guid id)
+        public async Task<MovimentacaoResponse> ExcluirAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var movimentacao = await unitOfWork.MovimentacaoRepository.GetByIdAsync(id);
+            if (movimentacao == null)
+                throw new KeyNotFoundException("Movimentação não encontrada.");
+
+            await unitOfWork.MovimentacaoRepository.DeleteAsync(movimentacao);
+
+            return mapper.Map<MovimentacaoResponse>(movimentacao);
         }
 
-        public Task<PageResult<MovimentacaoResponse>> ConsultarAsync(int pageNumber, int pageSize)
+        public async Task<PageResult<MovimentacaoResponse>> ConsultarAsync(int pageNumber, int pageSize)
         {
-            throw new NotImplementedException();
+            if (pageNumber <= 0) pageNumber = 1;
+            if (pageSize <= 0 || pageSize > 25) pageSize = 25;
+
+            var pageResult = await unitOfWork.MovimentacaoRepository.GetAllAsync(pageNumber, pageSize);
+
+            var response = new PageResult<MovimentacaoResponse>
+            {
+                Items = mapper.Map<List<MovimentacaoResponse>>(pageResult.Items),
+                PageNumber = pageResult.PageNumber,
+                PageSize = pageResult.PageSize,
+                TotalCount = pageResult.TotalCount
+            };
+
+            return response;
         }
 
-        public Task<MovimentacaoResponse?> ObterPorIdAsync(Guid id)
+        public async Task<MovimentacaoResponse?> ObterPorIdAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var movimentacao = await unitOfWork.MovimentacaoRepository.GetByIdAsync(id);
+            if (movimentacao == null)
+                return null;
+
+            return mapper.Map<MovimentacaoResponse>(movimentacao);
         }
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            unitOfWork.Dispose();
         }
     }
 }

@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
 using FinancasApp.Domain.Dtos.Requests;
 using FinancasApp.Domain.Dtos.Responses;
+using FinancasApp.Domain.Entities;
 using FinancasApp.Domain.Interfaces.Repositories;
 using FinancasApp.Domain.Interfaces.Services;
 using FinancasApp.Domain.Utils;
+using FinancasApp.Domain.Validators;
+using FluentValidation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,34 +20,91 @@ namespace FinancasApp.Domain.Services
     /// </summary>
     public class CategoriaService (IUnitOfWork unitOfWork, IMapper mapper) : ICategoriaService
     {
-        public Task<CategoriaResponse> AdicionarAsync(CategoriaRequest request)
+        public async Task<CategoriaResponse> AdicionarAsync(CategoriaRequest request)
         {
-            throw new NotImplementedException();
+            var categoria = mapper.Map<Categoria>(request);
+
+            var validator = new CategoriaValidator();
+            var result = validator.Validate(categoria);
+
+            if (!result.IsValid)
+                throw new ValidationException(result.Errors);
+
+            var any = await unitOfWork.CategoriaRepository.AnyAsync(c => c.Nome.Equals(categoria.Nome));
+            if (any)
+                throw new InvalidOperationException("O nome da catgegoria já está cadastrado. Tente outro.");
+
+            await unitOfWork.CategoriaRepository.AddAsync(categoria);
+
+            return mapper.Map<CategoriaResponse>(categoria);
         }
 
-        public Task<CategoriaResponse> Modificar(Guid id, CategoriaRequest request)
+        public async Task<CategoriaResponse> ModificarAsync(Guid id, CategoriaRequest request)
         {
-            throw new NotImplementedException();
+            var categoria = await unitOfWork.CategoriaRepository.GetByIdAsync(id);
+            if (categoria == null)
+                throw new KeyNotFoundException("Categoria não encontrada.");
+
+            mapper.Map(request, categoria);
+
+            var validator = new CategoriaValidator();
+            var result = validator.Validate(categoria);
+
+            if (!result.IsValid)
+                throw new ValidationException(result.Errors);
+
+            var any = await unitOfWork.CategoriaRepository.AnyAsync
+                (c => c.Nome.Equals(categoria.Nome) && c.Id != categoria.Id);
+
+            if (any)
+                throw new InvalidOperationException("Já existe outra categoria com este nome. Tente outro.");
+
+            await unitOfWork.CategoriaRepository.UpdateAsync(categoria);
+
+            return mapper.Map<CategoriaResponse>(categoria);
         }
 
-        public Task<CategoriaResponse> Excluir(Guid id)
+        public async Task<CategoriaResponse> ExcluirAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var categoria = await unitOfWork.CategoriaRepository.GetByIdAsync(id);
+            if (categoria == null)
+                throw new KeyNotFoundException("Categoria não encontrada.");
+
+            await unitOfWork.CategoriaRepository.DeleteAsync(categoria);
+
+            return mapper.Map<CategoriaResponse>(categoria);
         }
 
-        public Task<PageResult<CategoriaResponse>> ConsultarAsync(int pageNumber, int pageSize)
+        public async Task<PageResult<CategoriaResponse>> ConsultarAsync(int pageNumber, int pageSize)
         {
-            throw new NotImplementedException();
+            if (pageNumber <= 0) pageNumber = 1;
+            if (pageSize <= 0 || pageSize > 25) pageSize = 25;
+
+            var pageResult = await unitOfWork.CategoriaRepository.GetAllAsync(pageNumber, pageSize);
+
+            var response = new PageResult<CategoriaResponse>
+            {
+                Items = mapper.Map<List<CategoriaResponse>>(pageResult.Items),
+                PageNumber = pageResult.PageNumber,
+                PageSize = pageResult.PageSize,
+                TotalCount = pageResult.TotalCount
+            };
+
+            return response;
         }
 
-        public Task<CategoriaResponse?> ObterPorIdAsync(Guid id)
+        public async Task<CategoriaResponse?> ObterPorIdAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var categoria = await unitOfWork.CategoriaRepository.GetByIdAsync(id);
+            if (categoria == null)
+                return null;
+
+            return mapper.Map<CategoriaResponse>(categoria);
         }
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            unitOfWork.Dispose();
         }
     }
 }
