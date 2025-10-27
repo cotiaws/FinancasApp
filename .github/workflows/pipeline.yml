@@ -1,0 +1,85 @@
+name: ASP.NET API CI/CD
+
+on: 
+   push:
+     branches: ["master"]
+   pull_request:
+     branches: ["master"]
+
+jobs:
+
+   build:
+      name: Compilação
+      runs-on: ubuntu-latest
+      steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Instalar .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Mostrar estrutura do repositório
+        run: |
+          echo "Listando estrutura de diretórios..."
+          ls -R
+
+      - name: Restaurar dependências
+        run: dotnet restore
+
+      - name: Compilar e publicar a aplicação
+        run: dotnet publish ./FinancasApp.API/FinancasApp.API.csproj --configuration Release --output ./output
+
+      - name: Verificar saída do publish
+        run: ls -R ./output
+
+      - name: Exportar artefatos de build
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: ./output
+          retention-days: 7
+       
+   test:
+      name: Testes
+      runs-on: ubuntu-latest
+      needs: build
+      steps:
+      - name: Checkout do código
+        uses: actions/checkout@v3
+
+      - name: Instalar .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restaurar dependências
+        run: dotnet restore
+
+      - name: Executar testes (xUnit)
+        run: |
+          mkdir -p TestResults
+          dotnet test ./FinancasApp.Infra.Data.Tests/FinancasApp.Infra.Data.Tests.csproj \
+            --no-restore \
+            --configuration Release \
+            --logger "trx;LogFileName=results.trx" \
+            --logger "html;LogFileName=results.html" \
+            --results-directory ./TestResults
+
+      - name: Exportar relatório de testes
+        uses: actions/upload-artifact@v4
+        with:
+           name: test-report
+           path: ./TestResults
+           retention-days: 7
+           
+   deploy:
+      name: Implantação
+      runs-on: ubuntu-latest
+      needs: test
+      steps:
+          - name: Checkout do código
+            uses: actions/checkout@v3
+          - name: Implantação da aplicação
+            run: echo "Implatando o sistema em produção..."
